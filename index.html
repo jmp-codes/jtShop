@@ -70,7 +70,7 @@ input,select{font:500 15px var(--body);color:var(--ink);background:var(--bg);bor
 .msg{min-height:20px;font-size:14px;font-weight:600}
 .msg.err{color:var(--bad)}.msg.ok{color:var(--ok)}
 .tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
-table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;min-width:640px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;min-width:720px}
 th{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);text-align:right;padding:10px 12px;background:var(--surface2);white-space:nowrap}
 th:first-child,td:first-child{text-align:left}
 td{padding:10px 12px;border-top:1px solid var(--line);text-align:right}
@@ -100,7 +100,8 @@ tfoot td{font-weight:700;background:var(--surface2)}
     <div class="tile"><span class="l">Units in stock</span><span class="v" id="t-units">0</span><span class="s" id="t-items"></span></div>
     <div class="tile"><span class="l">Stock value (at cost)</span><span class="v" id="t-value">₱0</span><span class="s">Weighted average cost</span></div>
     <div class="tile"><span class="l">Sales today</span><span class="v" id="t-today">₱0</span><span class="s" id="t-today-n"></span></div>
-    <div class="tile"><span class="l">Total sales</span><span class="v" id="t-sales">₱0</span><span class="s" id="t-profit"></span></div>
+    <div class="tile"><span class="l">Total sales</span><span class="v" id="t-sales">₱0</span><span class="s" id="t-sales-n"></span></div>
+    <div class="tile"><span class="l">Total profit</span><span class="v" id="t-profit" style="color:var(--ok)">₱0</span><span class="s" id="t-rate"></span></div>
   </section>
 
   <nav role="tablist" aria-label="Sections">
@@ -111,8 +112,13 @@ tfoot td{font-weight:700;background:var(--surface2)}
   </nav>
 
   <section class="panel" id="p-stock">
+    <div class="card" style="display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;padding:12px 16px">
+      <label style="flex-direction:row;align-items:center;gap:10px;font-size:14px;color:var(--ink)">Profit for every ₱1,000 sold
+        <input id="rate" type="number" min="0" max="1000" step="1" inputmode="decimal" value="200" style="width:96px"></label>
+      <span class="note" id="rate-note"></span>
+    </div>
     <div class="tbl"><table>
-      <thead><tr><th>Item</th><th>Received</th><th>Sold</th><th>In stock</th><th>Avg cost</th><th>Stock value</th><th>Sales</th></tr></thead>
+      <thead><tr><th>Item</th><th>Received</th><th>Sold</th><th>In stock</th><th>Avg cost</th><th>Stock value</th><th>Sales</th><th>Profit</th></tr></thead>
       <tbody id="stock-body"></tbody>
       <tfoot id="stock-foot"></tfoot>
     </table></div>
@@ -171,6 +177,9 @@ tfoot td{font-weight:700;background:var(--surface2)}
   var products = [];       // computed
   var byKey = {};
   var loaded = false;
+  var perK = 200, rate = 0.2;
+  try{var pk=parseFloat(localStorage.getItem('tindahan-perk'));if(pk>=0)perK=pk}catch(e){}
+  rate=perK/1000;
 
   function key(n){return String(n).trim().replace(/\s+/g,' ').toLowerCase()}
   function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
@@ -212,19 +221,23 @@ tfoot td{font-weight:700;background:var(--surface2)}
     $('t-today').textContent=peso0.format(todaySales);
     $('t-today-n').textContent=todayN+(todayN===1?' unit sold':' units sold');
     $('t-sales').textContent=peso0.format(sales);
-    $('t-profit').textContent='Gross profit '+peso0.format(sales-soldCost);
+    $('t-sales-n').textContent=products.reduce(function(a,p){return a+p.sold},0)+' units sold';
+    $('t-profit').textContent=peso0.format(sales*rate);
+    $('t-rate').textContent=peso0.format(perK)+' per ₱1,000 sold';
+    $('t-today-n').textContent+=' · profit '+peso0.format(todaySales*rate);
+    $('rate-note').textContent='Profit = sales × '+(perK/10)+'%. Change the amount if your rate changes.';
 
     var body=$('stock-body');
     if(!products.length){
-      body.innerHTML='<tr><td colspan="7" class="empty">'+(loaded?'No stock yet. Open Receive and add your first delivery.':'Loading…')+'</td></tr>';
+      body.innerHTML='<tr><td colspan="8" class="empty">'+(loaded?'No stock yet. Open Receive and add your first delivery.':'Loading…')+'</td></tr>';
       $('stock-foot').innerHTML='';
     }else{
       body.innerHTML=products.map(function(p){
         var cls=p.stock<=0?'zero':(p.stock<=2?'low':'ok');
-        return '<tr><td class="name">'+esc(p.name)+'</td><td>'+p.recv+'</td><td>'+p.sold+'</td><td><span class="pill '+cls+'">'+p.stock+'</span></td><td>'+peso.format(p.avg)+'</td><td>'+peso.format(p.value)+'</td><td>'+peso.format(p.sales)+'</td></tr>';
+        return '<tr><td class="name">'+esc(p.name)+'</td><td>'+p.recv+'</td><td>'+p.sold+'</td><td><span class="pill '+cls+'">'+p.stock+'</span></td><td>'+peso.format(p.avg)+'</td><td>'+peso.format(p.value)+'</td><td>'+peso.format(p.sales)+'</td><td style="color:var(--ok);font-weight:600">'+peso.format(p.sales*rate)+'</td></tr>';
       }).join('');
       var tr=0,ts=0;products.forEach(function(p){tr+=p.recv;ts+=p.sold});
-      $('stock-foot').innerHTML='<tr><td>Total</td><td>'+tr+'</td><td>'+ts+'</td><td>'+units+'</td><td></td><td>'+peso.format(value)+'</td><td>'+peso.format(sales)+'</td></tr>';
+      $('stock-foot').innerHTML='<tr><td>Total</td><td>'+tr+'</td><td>'+ts+'</td><td>'+units+'</td><td></td><td>'+peso.format(value)+'</td><td>'+peso.format(sales)+'</td><td>'+peso.format(sales*rate)+'</td></tr>';
     }
 
     $('names').innerHTML=products.map(function(p){return '<option value="'+esc(p.name)+'">'}).join('');
@@ -257,6 +270,14 @@ tfoot td{font-weight:700;background:var(--surface2)}
     var q=+$('out-qty').value||0,pr=+$('out-price').value||0;
     $('out-total').textContent=peso.format(q*pr);
   }
+  $('rate').value=perK;
+  $('rate').addEventListener('input',function(){
+    var v=parseFloat($('rate').value);
+    if(!(v>=0)||v>1000)return;
+    perK=v;rate=v/1000;
+    try{localStorage.setItem('tindahan-perk',String(v))}catch(e){}
+    render();
+  });
   $('in-qty').addEventListener('input',inPreview);
   $('in-price').addEventListener('input',inPreview);
   $('out-name').addEventListener('change',function(){say('out-msg','');sellPreview(true)});
