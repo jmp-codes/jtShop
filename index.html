@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tindahan Stock Book</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+:root{color-scheme:light}
+:root{
+  --bg:#f3f6f7; --surface:#ffffff; --surface2:#eaf0f1; --ink:#13212b; --muted:#5b6b75; --line:#d5dfe2;
+  --in:#0f766e; --in-soft:#d6efec; --out:#b45309; --out-soft:#fbe7cf;
+  --ok:#15803d; --warn:#a16207; --warn-soft:#fdf0c4; --bad:#b91c1c; --bad-soft:#fbd9d9;
+  --focus:#1d4ed8;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0e171d; --surface:#15222b; --surface2:#1c2d38; --ink:#e8f0f3; --muted:#93a5b0; --line:#28394500;
+    --line:#2a3b47;
+    --in:#3fc1b3; --in-soft:#12372f; --out:#f0a35a; --out-soft:#3d2a14;
+    --ok:#5fd18a; --warn:#f0c85a; --warn-soft:#3b3213; --bad:#ff8a8a; --bad-soft:#40191b;
+    --focus:#7aa7ff;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0e171d; --surface:#15222b; --surface2:#1c2d38; --ink:#e8f0f3; --muted:#93a5b0; --line:#2a3b47;
+  --in:#3fc1b3; --in-soft:#12372f; --out:#f0a35a; --out-soft:#3d2a14;
+  --ok:#5fd18a; --warn:#f0c85a; --warn-soft:#3b3213; --bad:#ff8a8a; --bad-soft:#40191b;
+  --focus:#7aa7ff;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;padding-inline:16px;padding-block:20px 48px}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1,h2{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:28px;line-height:1.1}
+h2{font-size:19px}
+.top{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between}
+.top p{margin:0;color:var(--muted);font-size:13px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:2px}
+.tile .l{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.tile .v{font-family:var(--display);font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
+.tile .s{font-size:12px;color:var(--muted)}
+nav[role=tablist]{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
+nav button{appearance:none;background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);font:600 15px var(--body);padding:10px 14px;cursor:pointer;white-space:nowrap}
+nav button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--ink)}
+nav button[data-tab=receive][aria-selected=true]{border-bottom-color:var(--in)}
+nav button[data-tab=sell][aria-selected=true]{border-bottom-color:var(--out)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.panel{display:flex;flex-direction:column;gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px}
+form.entry{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;align-items:end}
+form.entry .wide{grid-column:span 2}
+@media (max-width:520px){form.entry .wide{grid-column:auto}}
+label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;color:var(--muted)}
+input,select{font:500 15px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:9px 10px;width:100%;min-height:42px}
+.btn{font:700 15px var(--body);border:0;border-radius:7px;padding:10px 18px;min-height:42px;cursor:pointer;color:#fff}
+.btn.in{background:#0f766e}.btn.out{background:#b45309}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);padding:5px 10px;min-height:0;font-size:13px}
+.btn.ghost.sure{color:var(--bad);border-color:var(--bad)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.preview{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px;color:var(--muted);margin-top:12px}
+.preview b{color:var(--ink);font-variant-numeric:tabular-nums}
+.msg{min-height:20px;font-size:14px;font-weight:600}
+.msg.err{color:var(--bad)}.msg.ok{color:var(--ok)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;min-width:640px}
+th{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);text-align:right;padding:10px 12px;background:var(--surface2);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+td{padding:10px 12px;border-top:1px solid var(--line);text-align:right}
+td.name{font-weight:600;min-width:200px}
+tfoot td{font-weight:700;background:var(--surface2)}
+.pill{display:inline-block;min-width:44px;text-align:center;padding:2px 9px;border-radius:99px;font-weight:700;font-size:13px}
+.pill.ok{background:var(--in-soft);color:var(--in)}
+.pill.low{background:var(--warn-soft);color:var(--warn)}
+.pill.zero{background:var(--bad-soft);color:var(--bad)}
+.tag{font-size:12px;font-weight:700;padding:2px 8px;border-radius:5px}
+.tag.in{background:var(--in-soft);color:var(--in)}.tag.out{background:var(--out-soft);color:var(--out)}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+.note{font-size:13px;color:var(--muted)}
+.foot{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:space-between;align-items:center}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Tindahan Stock Book</h1>
+    <p id="mode">Loading records…</p>
+  </header>
+
+  <section class="tiles" aria-label="Summary">
+    <div class="tile"><span class="l">Units in stock</span><span class="v" id="t-units">0</span><span class="s" id="t-items"></span></div>
+    <div class="tile"><span class="l">Stock value (at cost)</span><span class="v" id="t-value">₱0</span><span class="s">Weighted average cost</span></div>
+    <div class="tile"><span class="l">Sales today</span><span class="v" id="t-today">₱0</span><span class="s" id="t-today-n"></span></div>
+    <div class="tile"><span class="l">Total sales</span><span class="v" id="t-sales">₱0</span><span class="s" id="t-profit"></span></div>
+  </section>
+
+  <nav role="tablist" aria-label="Sections">
+    <button role="tab" data-tab="stock" aria-selected="true">Stock</button>
+    <button role="tab" data-tab="receive" aria-selected="false">Receive</button>
+    <button role="tab" data-tab="sell" aria-selected="false">Sell</button>
+    <button role="tab" data-tab="history" aria-selected="false">History</button>
+  </nav>
+
+  <section class="panel" id="p-stock">
+    <div class="tbl"><table>
+      <thead><tr><th>Item</th><th>Received</th><th>Sold</th><th>In stock</th><th>Avg cost</th><th>Stock value</th><th>Sales</th></tr></thead>
+      <tbody id="stock-body"></tbody>
+      <tfoot id="stock-foot"></tfoot>
+    </table></div>
+    <p class="note">Yellow means 2 or fewer left. Red means sold out. Items appear here the first time you receive them.</p>
+  </section>
+
+  <section class="panel" id="p-receive" hidden>
+    <div class="card">
+      <h2>Receive stock</h2>
+      <p class="note" style="margin:6px 0 14px">Adds to inventory. Type a new item name or pick an existing one.</p>
+      <form class="entry" id="f-in" autocomplete="off">
+        <label class="wide">Item name<input id="in-name" list="names" required maxlength="120" placeholder="e.g. White Dove Baby Cologne"></label>
+        <label>Qty<input id="in-qty" type="number" min="1" step="1" inputmode="numeric" required></label>
+        <label>Unit cost (₱)<input id="in-price" type="number" min="0" step="0.01" inputmode="decimal" required></label>
+        <button class="btn in" type="submit">Add to stock</button>
+      </form>
+      <div class="preview"><span>Line cost <b id="in-total">₱0.00</b></span></div>
+      <div class="msg" id="in-msg" role="status"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-sell" hidden>
+    <div class="card">
+      <h2>Sell an item</h2>
+      <p class="note" style="margin:6px 0 14px">Picking the item fills in the price. Stock goes down when you record the sale.</p>
+      <form class="entry" id="f-out">
+        <label class="wide">Item<select id="out-name" required></select></label>
+        <label>Qty<input id="out-qty" type="number" min="1" step="1" inputmode="numeric" value="1" required></label>
+        <label>Price (₱)<input id="out-price" type="number" min="0" step="0.01" inputmode="decimal" required></label>
+        <button class="btn out" type="submit" id="out-btn">Record sale</button>
+      </form>
+      <div class="preview"><span>Available <b id="out-avail">0</b></span><span>Sale total <b id="out-total">₱0.00</b></span></div>
+      <div class="msg" id="out-msg" role="status"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-history" hidden>
+    <div class="tbl"><table style="min-width:600px">
+      <thead><tr><th>When</th><th>Type</th><th>Item</th><th>Qty</th><th>Price</th><th>Total</th><th></th></tr></thead>
+      <tbody id="hist-body"></tbody>
+    </table></div>
+    <p class="note">Deleting a line reverses its effect on stock and amounts.</p>
+  </section>
+
+  <div class="foot"><span class="note" id="foot-note"></span></div>
+</div>
+<datalist id="names"></datalist>
+
+<script>
+(function(){
+  var peso = new Intl.NumberFormat('en-PH',{style:'currency',currency:'PHP'});
+  var peso0 = new Intl.NumberFormat('en-PH',{style:'currency',currency:'PHP',maximumFractionDigits:0});
+  var $ = function(id){return document.getElementById(id)};
+  var entries = [];        // {id,type,name,qty,price,ts}
+  var store = null;        // {add, remove}
+  var products = [];       // computed
+  var byKey = {};
+  var loaded = false;
+
+  function key(n){return String(n).trim().replace(/\s+/g,' ').toLowerCase()}
+  function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+  function fmtDate(ts){
+    var d=new Date(ts);
+    return d.toLocaleDateString('en-PH',{month:'short',day:'numeric'})+' '+d.toLocaleTimeString('en-PH',{hour:'numeric',minute:'2-digit'});
+  }
+  function say(id,text,kind){var e=$(id);e.textContent=text;e.className='msg '+(kind||'')}
+
+  /* ---------- compute ---------- */
+  function compute(){
+    var map={}, list=[];
+    var sorted=entries.slice().sort(function(a,b){return a.ts-b.ts});
+    sorted.forEach(function(e){
+      var k=key(e.name), p=map[k];
+      if(!p){p=map[k]={name:e.name,recv:0,sold:0,cost:0,sales:0,last:0};list.push(p)}
+      if(e.type==='in'){p.recv+=e.qty;p.cost+=e.qty*e.price;p.last=e.price;p.name=p.name||e.name}
+      else{p.sold+=e.qty;p.sales+=e.qty*e.price}
+    });
+    list.forEach(function(p){
+      p.stock=p.recv-p.sold;
+      p.avg=p.recv?p.cost/p.recv:0;
+      p.value=p.stock*p.avg;
+    });
+    list.sort(function(a,b){return a.name.localeCompare(b.name)});
+    products=list; byKey=map;
+  }
+
+  /* ---------- render ---------- */
+  function render(){
+    compute();
+    var units=0,value=0,sales=0,soldCost=0,todaySales=0,todayN=0;
+    var today=new Date().toDateString();
+    products.forEach(function(p){units+=p.stock;value+=p.value;sales+=p.sales;soldCost+=p.sold*p.avg});
+    entries.forEach(function(e){if(e.type==='out'&&new Date(e.ts).toDateString()===today){todaySales+=e.qty*e.price;todayN+=e.qty}});
+    $('t-units').textContent=units.toLocaleString('en-PH');
+    $('t-items').textContent=products.length+(products.length===1?' item':' items');
+    $('t-value').textContent=peso0.format(value);
+    $('t-today').textContent=peso0.format(todaySales);
+    $('t-today-n').textContent=todayN+(todayN===1?' unit sold':' units sold');
+    $('t-sales').textContent=peso0.format(sales);
+    $('t-profit').textContent='Gross profit '+peso0.format(sales-soldCost);
+
+    var body=$('stock-body');
+    if(!products.length){
+      body.innerHTML='<tr><td colspan="7" class="empty">'+(loaded?'No stock yet. Open Receive and add your first delivery.':'Loading…')+'</td></tr>';
+      $('stock-foot').innerHTML='';
+    }else{
+      body.innerHTML=products.map(function(p){
+        var cls=p.stock<=0?'zero':(p.stock<=2?'low':'ok');
+        return '<tr><td class="name">'+esc(p.name)+'</td><td>'+p.recv+'</td><td>'+p.sold+'</td><td><span class="pill '+cls+'">'+p.stock+'</span></td><td>'+peso.format(p.avg)+'</td><td>'+peso.format(p.value)+'</td><td>'+peso.format(p.sales)+'</td></tr>';
+      }).join('');
+      var tr=0,ts=0;products.forEach(function(p){tr+=p.recv;ts+=p.sold});
+      $('stock-foot').innerHTML='<tr><td>Total</td><td>'+tr+'</td><td>'+ts+'</td><td>'+units+'</td><td></td><td>'+peso.format(value)+'</td><td>'+peso.format(sales)+'</td></tr>';
+    }
+
+    $('names').innerHTML=products.map(function(p){return '<option value="'+esc(p.name)+'">'}).join('');
+
+    var sel=$('out-name'), cur=sel.value;
+    sel.innerHTML='<option value="" disabled>Choose an item…</option>'+products.map(function(p){
+      return '<option value="'+esc(p.name)+'"'+(p.stock<=0?' disabled':'')+'>'+esc(p.name)+' ('+p.stock+' left)</option>';
+    }).join('');
+    if(cur&&byKey[key(cur)])sel.value=byKey[key(cur)].name;else sel.selectedIndex=0;
+    sellPreview(false);
+
+    var hb=$('hist-body');
+    var rows=entries.slice().sort(function(a,b){return b.ts-a.ts});
+    hb.innerHTML=rows.length?rows.map(function(e){
+      return '<tr><td style="text-align:left;white-space:nowrap">'+fmtDate(e.ts)+'</td><td><span class="tag '+e.type+'">'+(e.type==='in'?'Received':'Sold')+'</span></td><td style="text-align:left">'+esc(e.name)+'</td><td>'+e.qty+'</td><td>'+peso.format(e.price)+'</td><td>'+peso.format(e.qty*e.price)+'</td><td><button class="btn ghost" data-del="'+esc(e.id)+'">Delete</button></td></tr>';
+    }).join(''):'<tr><td colspan="7" class="empty">No transactions yet.</td></tr>';
+    inPreview();
+  }
+
+  /* ---------- forms ---------- */
+  function inPreview(){
+    var q=+$('in-qty').value||0,p=+$('in-price').value||0;
+    $('in-total').textContent=peso.format(q*p);
+  }
+  function sellPreview(fillPrice){
+    var p=byKey[key($('out-name').value||'')];
+    if(p&&fillPrice)$('out-price').value=p.last.toFixed(2);
+    if(!p&&fillPrice)$('out-price').value='';
+    $('out-avail').textContent=p?p.stock:0;
+    var q=+$('out-qty').value||0,pr=+$('out-price').value||0;
+    $('out-total').textContent=peso.format(q*pr);
+  }
+  $('in-qty').addEventListener('input',inPreview);
+  $('in-price').addEventListener('input',inPreview);
+  $('out-name').addEventListener('change',function(){say('out-msg','');sellPreview(true)});
+  $('out-qty').addEventListener('input',function(){sellPreview(false)});
+  $('out-price').addEventListener('input',function(){sellPreview(false)});
+
+  function save(entry,msgId,okText,after){
+    var btnBusy=true;
+    Promise.resolve(store.add(entry)).then(function(){
+      say(msgId,okText,'ok');after&&after();
+    }).catch(function(err){
+      say(msgId,'Could not save. You may only have view access to this page. ('+((err&&err.code)||'error')+')','err');
+    });
+  }
+
+  $('f-in').addEventListener('submit',function(ev){
+    ev.preventDefault();
+    if(!store)return;
+    var raw=$('in-name').value.trim().replace(/\s+/g,' ');
+    var qty=parseInt($('in-qty').value,10),price=parseFloat($('in-price').value);
+    if(!raw||!(qty>0)||!(price>=0)){say('in-msg','Enter a name, a whole quantity and a cost.','err');return}
+    var name=byKey[key(raw)]?byKey[key(raw)].name:raw;
+    save({type:'in',name:name,qty:qty,price:price,ts:Date.now()},'in-msg','Added '+qty+' × '+name+' to stock.',function(){
+      $('in-qty').value='';$('in-price').value='';$('in-name').value='';inPreview();$('in-name').focus();
+    });
+  });
+
+  $('f-out').addEventListener('submit',function(ev){
+    ev.preventDefault();
+    if(!store)return;
+    var p=byKey[key($('out-name').value||'')];
+    var qty=parseInt($('out-qty').value,10),price=parseFloat($('out-price').value);
+    if(!p){say('out-msg','Choose an item first.','err');return}
+    if(!(qty>0)||!(price>=0)){say('out-msg','Enter a whole quantity and a price.','err');return}
+    if(qty>p.stock){say('out-msg','Only '+p.stock+' left of '+p.name+'.','err');return}
+    save({type:'out',name:p.name,qty:qty,price:price,ts:Date.now()},'out-msg','Sold '+qty+' × '+p.name+' for '+peso.format(qty*price)+'.',function(){
+      $('out-qty').value='1';
+    });
+  });
+
+  var pending=null;
+  $('hist-body').addEventListener('click',function(ev){
+    var b=ev.target.closest('[data-del]');if(!b||!store)return;
+    var id=b.getAttribute('data-del');
+    if(pending!==id){pending=id;render();var nb=document.querySelector('[data-del="'+CSS.escape(id)+'"]');if(nb){nb.textContent='Tap again to delete';nb.classList.add('sure')}return}
+    pending=null;
+    Promise.resolve(store.remove(id)).catch(function(){});
+  });
+
+  /* ---------- tabs ---------- */
+  function showTab(t){
+    document.querySelectorAll('nav [role=tab]').forEach(function(b){b.setAttribute('aria-selected',b.dataset.tab===t?'true':'false')});
+    ['stock','receive','sell','history'].forEach(function(n){$('p-'+n).hidden=n!==t});
+    try{sessionStorage.setItem('tab',t)}catch(e){}
+  }
+  document.querySelector('nav').addEventListener('click',function(ev){
+    var b=ev.target.closest('[role=tab]');if(b)showTab(b.dataset.tab);
+  });
+  try{var st=sessionStorage.getItem('tab');if(st)showTab(st)}catch(e){}
+
+  /* ---------- storage ---------- */
+  function localStore(){
+    var LS='tindahan-entries';
+    var raw=null;try{raw=localStorage.getItem(LS)}catch(e){}
+    if(raw===null){
+      var t0=Date.now()-5000;
+      entries=[["White Dove Baby Cologen",5,155],["Sof&mmmmm FabCon (Serenity) - G",1,299],["Sof&mmmmm FabCon (Eternity) - P",5,285],["White Dove - Sweet Lulubay Baby Shampoo 200ml",2,155],["White Dove - Sweet Lulubay Baby Wash 200ml",2,155]].map(function(r,i){return {id:'seed'+i,type:'in',name:r[0],qty:r[1],price:r[2],ts:t0+i}});
+      try{localStorage.setItem(LS,JSON.stringify(entries))}catch(e){}
+    }else{try{entries=JSON.parse(raw)||[]}catch(e){entries=[]}}
+    function persist(){try{localStorage.setItem(LS,JSON.stringify(entries))}catch(e){}}
+    store={
+      add:function(e){e.id='l'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);entries.push(e);persist();render()},
+      remove:function(id){entries=entries.filter(function(x){return x.id!==id});persist();render()}
+    };
+    loaded=true;
+    $('mode').textContent='Saved in this browser only';
+    $('foot-note').textContent='Records are saved in this browser on this device.';
+    render();
+  }
+
+  render();
+  (window.claude&&window.claude.use?window.claude.use('db'):Promise.resolve(null)).then(function(db){
+    if(!db){localStore();return}
+    var col=db.collection('entries');
+    store={
+      add:function(e){return col.add(e)},
+      remove:function(id){return col.doc(id).delete()}
+    };
+    col.onSnapshot(function(snap){
+      entries=snap.docs.map(function(d){var x=d.data();x.id=d.id;return x});
+      loaded=true;
+      $('mode').textContent='Saved and shared with everyone who opens this page';
+      $('foot-note').textContent='Every viewer sees the same stock. Changes appear live.';
+      render();
+    },function(){localStore()});
+  }).catch(function(){localStore()});
+})();
+</script>
+</body>
+</html>
